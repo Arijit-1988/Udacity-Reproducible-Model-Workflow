@@ -6,6 +6,13 @@ import logging
 import pandas as pd
 import wandb
 
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 logger = logging.getLogger()
@@ -15,7 +22,13 @@ def go(args: argparse.Namespace) -> None:
     run = wandb.init(job_type="basic_cleaning")
     run.config.update(vars(args))
 
-    artifact_local_path = run.use_artifact(args.input_artifact).file()
+    output_description = (
+        " ".join(args.output_description)
+        if isinstance(args.output_description, list)
+        else args.output_description
+    )
+
+    artifact_local_path = run.use_artifact(args.input_artifact).file(root="artifacts/input")
     df = pd.read_csv(artifact_local_path)
 
     idx = df["price"].between(args.min_price, args.max_price)
@@ -32,7 +45,7 @@ def go(args: argparse.Namespace) -> None:
     artifact = wandb.Artifact(
         args.output_artifact,
         type=args.output_type,
-        description=args.output_description,
+        description=output_description,
     )
     artifact.add_file("clean_sample.csv")
     run.log_artifact(artifact)
@@ -64,7 +77,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--output_description",
-        type=str,
+        nargs="+",
         help="Description for the output artifact",
         required=True,
     )

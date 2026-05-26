@@ -24,6 +24,13 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 from sklearn.pipeline import Pipeline, make_pipeline
 
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
+
 
 def delta_date_feature(dates):
     """
@@ -43,8 +50,15 @@ def go(args):
     run = wandb.init(job_type="train_random_forest")
     run.config.update(args)
 
+    rf_config_path = (
+        " ".join(args.rf_config)
+        if isinstance(args.rf_config, list)
+        else args.rf_config
+    )
+    rf_config_path = str(rf_config_path).strip().strip("'\"")
+
     # Get the Random Forest configuration and update W&B
-    with open(args.rf_config) as fp:
+    with open(rf_config_path) as fp:
         rf_config = json.load(fp)
     run.config.update(rf_config)
 
@@ -54,7 +68,7 @@ def go(args):
     ######################################
     # Use run.use_artifact(...).file() to get the train and validation artifact (args.trainval_artifact)
     # and save the returned path in train_local_path
-    trainval_local_path = run.use_artifact(args.trainval_artifact).file()
+    trainval_local_path = run.use_artifact(args.trainval_artifact).file(root="artifacts/trainval")
     ######################################
 
     X = pd.read_csv(trainval_local_path)
@@ -282,6 +296,7 @@ if __name__ == "__main__":
         help="Random forest configuration. A JSON dict that will be passed to the "
         "scikit-learn constructor for RandomForestRegressor.",
         default="{}",
+        nargs="+",
     )
 
     parser.add_argument(

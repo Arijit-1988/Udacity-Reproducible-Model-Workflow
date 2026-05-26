@@ -113,6 +113,8 @@ mlruns/
 outputs/
 random_forest_dir/
 multirun/
+rf_config.json
+src/basic_cleaning/clean_sample.csv
 
 # Local secrets (never commit)
 .secrets/

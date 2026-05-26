@@ -64,6 +64,12 @@ def go(config: DictConfig):
 
     # Allow running without conda by setting MLFLOW_ENV_MANAGER=local
     env_manager = os.getenv("MLFLOW_ENV_MANAGER", "conda")
+    if env_manager == "local":
+        # Ensure nested MLflow project commands resolve to the same interpreter
+        # that is executing this entrypoint (important on Windows).
+        interpreter_dir = str(Path(sys.executable).parent)
+        os.environ["MLFLOW_PYTHON_BIN"] = sys.executable
+        os.environ["PATH"] = interpreter_dir + os.pathsep + os.environ.get("PATH", "")
     project_root = str(project_root)
 
     # Steps to execute

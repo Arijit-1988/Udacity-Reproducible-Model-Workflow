@@ -10,6 +10,13 @@ from pathlib import Path
 
 import wandb
 
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except ImportError:
+    pass
+
 # Local env_manager mode does not install `-e ..`, so add components root to path.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from wandb_utils.log_artifact import log_artifact
