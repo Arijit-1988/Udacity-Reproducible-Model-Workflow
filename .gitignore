@@ -113,3 +113,8 @@ mlruns/
 outputs/
 random_forest_dir/
 multirun/
+
+# Local secrets (never commit)
+.secrets/
+*.secret
+*.secrets
