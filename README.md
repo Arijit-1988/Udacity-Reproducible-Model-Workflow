@@ -6,6 +6,11 @@ to be retrained with the same cadence, necessitating an end-to-end pipeline that
 
 In this project you will build such a pipeline.
 
+## Submission Links
+
+- W&B Project (public): REPLACE_WITH_PUBLIC_WANDB_PROJECT_URL
+- GitHub Repository: REPLACE_WITH_YOUR_GITHUB_REPO_URL
+
 ## Table of contents
 
 - [Introduction](#build-an-ML-Pipeline-for-Short-Term-Rental-Prices-in-NYC)
