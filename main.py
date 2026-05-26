@@ -1,11 +1,11 @@
 import json
+import sys
 
 import mlflow
 import tempfile
 import os
 import wandb
-import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 
 _steps = [
     "download",
@@ -20,13 +20,26 @@ _steps = [
 ]
 
 
-# This automatically reads in the configuration
-@hydra.main(version_base=None, config_name='config', config_path='.')  # Adding version_base for Python 3.13 compatibility
+def _load_config_from_cli() -> DictConfig:
+    config = OmegaConf.load("config.yaml")
+
+    # Keep only dotlist-style overrides (e.g., main.steps='download').
+    overrides = [arg for arg in sys.argv[1:] if "=" in arg and not arg.startswith("$(")]
+    if overrides:
+        config = OmegaConf.merge(config, OmegaConf.from_dotlist(overrides))
+
+    return config
+
+
 def go(config: DictConfig):
 
     # Setup the wandb experiment. All runs will be grouped under this name
     os.environ["WANDB_PROJECT"] = config["main"]["project_name"]
     os.environ["WANDB_RUN_GROUP"] = config["main"]["experiment_name"]
+
+    # Allow running without conda by setting MLFLOW_ENV_MANAGER=local
+    env_manager = os.getenv("MLFLOW_ENV_MANAGER", "conda")
+    project_root = os.getcwd()
 
     # Steps to execute
     steps_par = config['main']['steps']
@@ -40,7 +53,7 @@ def go(config: DictConfig):
             _ = mlflow.run(
                 f"{config['main']['components_repository']}/get_data",
                 "main",
-                env_manager="conda",
+                env_manager=env_manager,
                 parameters={
                     "sample": config["etl"]["sample"],
                     "artifact_name": "sample.csv",
@@ -51,9 +64,9 @@ def go(config: DictConfig):
 
         if "basic_cleaning" in active_steps:
             _ = mlflow.run(
-                os.path.join(hydra.utils.get_original_cwd(), "src", "basic_cleaning"),
+                os.path.join(project_root, "src", "basic_cleaning"),
                 "main",
-                env_manager="conda",
+                env_manager=env_manager,
                 parameters={
                     "input_artifact": "sample.csv:latest",
                     "output_artifact": "clean_sample.csv",
@@ -66,9 +79,9 @@ def go(config: DictConfig):
 
         if "data_check" in active_steps:
             _ = mlflow.run(
-                os.path.join(hydra.utils.get_original_cwd(), "src", "data_check"),
+                os.path.join(project_root, "src", "data_check"),
                 "main",
-                env_manager="conda",
+                env_manager=env_manager,
                 parameters={
                     "csv": "clean_sample.csv:latest",
                     "ref": "clean_sample.csv:reference",
@@ -82,7 +95,7 @@ def go(config: DictConfig):
             _ = mlflow.run(
                 f"{config['main']['components_repository']}/train_val_test_split",
                 "main",
-                env_manager="conda",
+                env_manager=env_manager,
                 parameters={
                     "input": "clean_sample.csv:latest",
                     "test_size": config["modeling"]["test_size"],
@@ -102,9 +115,9 @@ def go(config: DictConfig):
             # step
 
             _ = mlflow.run(
-                os.path.join(hydra.utils.get_original_cwd(), "src", "train_random_forest"),
+                os.path.join(project_root, "src", "train_random_forest"),
                 "main",
-                env_manager="conda",
+                env_manager=env_manager,
                 parameters={
                     "trainval_artifact": "trainval_data.csv:latest",
                     "val_size": config["modeling"]["val_size"],
@@ -121,7 +134,7 @@ def go(config: DictConfig):
             _ = mlflow.run(
                 f"{config['main']['components_repository']}/test_regression_model",
                 "main",
-                env_manager="conda",
+                env_manager=env_manager,
                 parameters={
                     "mlflow_model": "random_forest_export:prod",
                     "test_dataset": "test_data.csv:latest",
@@ -130,4 +143,4 @@ def go(config: DictConfig):
 
 
 if __name__ == "__main__":
-    go()
+    go(_load_config_from_cli())
