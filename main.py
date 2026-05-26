@@ -1,5 +1,6 @@
 import json
 import sys
+from pathlib import Path
 
 import mlflow
 import tempfile
@@ -25,13 +26,37 @@ def _load_config_from_cli() -> DictConfig:
 
     # Keep only dotlist-style overrides (e.g., main.steps='download').
     overrides = [arg for arg in sys.argv[1:] if "=" in arg and not arg.startswith("$(")]
+    normalized_overrides: list[str] = []
+    for arg in overrides:
+        key, value = arg.split("=", 1)
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        normalized_overrides.append(f"{key}={value}")
+
     if overrides:
-        config = OmegaConf.merge(config, OmegaConf.from_dotlist(overrides))
+        config = OmegaConf.merge(config, OmegaConf.from_dotlist(normalized_overrides))
 
     return config
 
 
+def _load_wandb_key_from_secret(project_root: Path) -> None:
+    secret_path = project_root / ".secrets" / "wandb_api_key.env"
+    if not secret_path.exists():
+        return
+
+    for line in secret_path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("WANDB_API_KEY="):
+            value = line.split("=", 1)[1].strip().strip("'\"")
+            if value:
+                os.environ["WANDB_API_KEY"] = value
+            break
+
+
 def go(config: DictConfig):
+
+    project_root = Path(os.getcwd())
+    _load_wandb_key_from_secret(project_root)
 
     # Setup the wandb experiment. All runs will be grouped under this name
     os.environ["WANDB_PROJECT"] = config["main"]["project_name"]
@@ -39,10 +64,10 @@ def go(config: DictConfig):
 
     # Allow running without conda by setting MLFLOW_ENV_MANAGER=local
     env_manager = os.getenv("MLFLOW_ENV_MANAGER", "conda")
-    project_root = os.getcwd()
+    project_root = str(project_root)
 
     # Steps to execute
-    steps_par = config['main']['steps']
+    steps_par = str(config['main']['steps']).strip().strip("'\"")
     active_steps = steps_par.split(",") if steps_par != "all" else _steps
 
     # Move to a temporary directory

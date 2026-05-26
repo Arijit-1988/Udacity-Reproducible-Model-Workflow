@@ -7,7 +7,12 @@ import logging
 import pandas as pd
 import wandb
 import tempfile
+import sys
+from pathlib import Path
 from sklearn.model_selection import train_test_split
+
+# Local env_manager mode does not install `-e ..`, so add components root to path.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from wandb_utils.log_artifact import log_artifact
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")

@@ -8,7 +8,7 @@ In this project you will build such a pipeline.
 
 ## Submission Links
 
-- W&B Project (public): https://wandb.ai/rmw/nyc_airbnb
+- W&B Project (public): https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb
 - GitHub Repository: https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow
 
 ## Table of contents

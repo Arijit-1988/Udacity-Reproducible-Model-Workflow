@@ -5,9 +5,13 @@ This script download a URL to a local destination
 import argparse
 import logging
 import os
+import sys
+from pathlib import Path
 
 import wandb
 
+# Local env_manager mode does not install `-e ..`, so add components root to path.
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from wandb_utils.log_artifact import log_artifact
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
@@ -19,12 +23,18 @@ def go(args):
     run = wandb.init(job_type="download_file")
     run.config.update(args)
 
+    artifact_description = (
+        " ".join(args.artifact_description)
+        if isinstance(args.artifact_description, list)
+        else args.artifact_description
+    )
+
     logger.info(f"Returning sample {args.sample}")
     logger.info(f"Uploading {args.artifact_name} to Weights & Biases")
     log_artifact(
         args.artifact_name,
         args.artifact_type,
-        args.artifact_description,
+        artifact_description,
         os.path.join("data", args.sample),
         run,
     )
@@ -40,7 +50,7 @@ if __name__ == "__main__":
     parser.add_argument("artifact_type", type=str, help="Output artifact type.")
 
     parser.add_argument(
-        "artifact_description", type=str, help="A brief description of this artifact"
+        "artifact_description", nargs="+", help="A brief description of this artifact"
     )
 
     args = parser.parse_args()
