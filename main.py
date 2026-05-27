@@ -1,5 +1,7 @@
 import json
 import sys
+import shutil
+import itertools
 from pathlib import Path
 
 import mlflow
@@ -40,6 +42,76 @@ def _load_config_from_cli() -> DictConfig:
     return config
 
 
+def _parse_dotlist_overrides(argv: list[str]) -> list[str]:
+    """Parse CLI dotlist overrides while tolerating quoted values.
+
+    Example input: ["main.steps='download,basic_cleaning'", "modeling.random_forest.n_estimators=200"]
+    """
+    overrides = [arg for arg in argv if "=" in arg and not arg.startswith("$(")]
+    normalized_overrides: list[str] = []
+    for arg in overrides:
+        key, value = arg.split("=", 1)
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in ("'", '"'):
+            value = value[1:-1]
+        normalized_overrides.append(f"{key}={value}")
+
+    return normalized_overrides
+
+
+def _is_multirun_cli(argv: list[str]) -> bool:
+    return any(arg in ("-m", "--multirun") for arg in argv)
+
+
+def _build_multirun_configs(argv: list[str]) -> list[DictConfig]:
+    base_config = OmegaConf.load("config.yaml")
+    dotlist = _parse_dotlist_overrides(argv)
+
+    fixed_overrides: list[str] = []
+    sweep_keys: list[str] = []
+    sweep_values: list[list[str]] = []
+
+    for override in dotlist:
+        key, value = override.split("=", 1)
+
+        # Keep comma-separated step lists as a fixed override.
+        if key == "main.steps":
+            fixed_overrides.append(override)
+            continue
+
+        if "," in value:
+            candidates = [item.strip() for item in value.split(",") if item.strip()]
+            if len(candidates) > 1:
+                sweep_keys.append(key)
+                sweep_values.append(candidates)
+                continue
+
+        fixed_overrides.append(override)
+
+    configs: list[DictConfig] = []
+
+    if sweep_keys:
+        for combo in itertools.product(*sweep_values):
+            combo_overrides = [f"{k}={v}" for k, v in zip(sweep_keys, combo)]
+            all_overrides = fixed_overrides + combo_overrides
+            config = OmegaConf.merge(base_config, OmegaConf.from_dotlist(all_overrides))
+            configs.append(config)
+    else:
+        config = OmegaConf.merge(base_config, OmegaConf.from_dotlist(fixed_overrides))
+        configs.append(config)
+
+    return configs
+
+
+def _resolve_env_manager() -> str:
+    env_manager = os.getenv("MLFLOW_ENV_MANAGER")
+    if env_manager:
+        return env_manager
+
+    # Prefer conda when available, otherwise fall back to local execution.
+    return "conda" if shutil.which("conda") else "local"
+
+
 def _load_wandb_key_from_secret(project_root: Path) -> None:
     secret_path = project_root / ".secrets" / "wandb_api_key.env"
     if not secret_path.exists():
@@ -63,7 +135,7 @@ def go(config: DictConfig):
     os.environ["WANDB_RUN_GROUP"] = config["main"]["experiment_name"]
 
     # Allow running without conda by setting MLFLOW_ENV_MANAGER=local
-    env_manager = os.getenv("MLFLOW_ENV_MANAGER", "conda")
+    env_manager = _resolve_env_manager()
     if env_manager == "local":
         # Ensure nested MLflow project commands resolve to the same interpreter
         # that is executing this entrypoint (important on Windows).
@@ -174,4 +246,10 @@ def go(config: DictConfig):
 
 
 if __name__ == "__main__":
-    go(_load_config_from_cli())
+    if _is_multirun_cli(sys.argv[1:]):
+        multirun_configs = _build_multirun_configs(sys.argv[1:])
+        for idx, run_config in enumerate(multirun_configs, start=1):
+            print(f"[multirun] Starting run {idx}/{len(multirun_configs)}")
+            go(run_config)
+    else:
+        go(_load_config_from_cli())

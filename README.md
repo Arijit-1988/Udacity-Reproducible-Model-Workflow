@@ -458,6 +458,18 @@ accomplished easily by exploiting the Hydra configuration system. Use the multi-
 at the end of the `hydra_options` specification), and try setting the parameter `modeling.max_tfidf_features` to 10, 15
 and 30, and the `modeling.random_forest.max_features` to 0.1, 0.33, 0.5, 0.75, 1.
 
+Example command used for submission (this generates 15 training jobs):
+
+```bash
+python main.py \
+   "main.steps=download,basic_cleaning,data_check,data_split,train_random_forest" \
+   "modeling.max_tfidf_features=10,15,30" \
+   "modeling.random_forest.max_features=0.1,0.33,0.5,0.75,1" \
+   -m
+```
+
+If you are not using conda, export `MLFLOW_ENV_MANAGER=local` before running the command.
+
 HINT: if you don't remember the hydra syntax, you can take inspiration from this is example, where we vary 
 two other parameters (this is NOT the solution to this step):
 ```bash
@@ -496,6 +508,12 @@ Go to the artifact section of the selected job, and select the
 `model_export` output artifact.  Add a ``prod`` tag to it to mark it as 
 "production ready".
 
+Optional automation (select lowest MAE and add alias `prod`):
+
+```bash
+python scripts/tag_best_model_prod.py --entity <your_wandb_entity> --project nyc_airbnb --group development
+```
+
 ### Test
 Use the provided step ``test_regression_model`` to test your production model against the
 test set. Implement the call to this component in the `main.py` file. As usual you can see the parameters in the
@@ -527,6 +545,8 @@ Call the release ``1.0.0``:
 
 If you find problems in the release, fix them and then make a new release like ``1.0.1``, ``1.0.2``
 and so on.
+
+For rubric compliance, maintain at least 2 releases (for example, `1.0.0` and `1.0.1`).
 
 ### Train the model on a new data sample
 
