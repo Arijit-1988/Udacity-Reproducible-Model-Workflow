@@ -8,9 +8,9 @@
 
 ## Links To Paste In Submission
 
-- W&B project: https://wandb.ai/we4/nyc_airbnb
-- Best training run (lowest MAE): https://wandb.ai/we4/nyc_airbnb/runs/x2whfj6w
-- Production model artifact (`random_forest_export:prod`): https://wandb.ai/we4/nyc_airbnb/artifacts/model_export/random_forest_export/prod
+- W&B project: https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb
+- Best training run (lowest MAE): https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb/runs/4yaeskhi
+- Production model artifact (`random_forest_export:prod`): https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb/artifacts/model_export/random_forest_export/prod
 - GitHub repository: https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow
 - GitHub tag 1.0.0: https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow/releases/tag/1.0.0
 - GitHub tag 1.0.1: https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow/releases/tag/1.0.1
@@ -19,12 +19,11 @@
 
 Recent train jobs with different hyperparameters:
 
-- https://wandb.ai/we4/nyc_airbnb/runs/uo0c59nn (n_estimators=220, MAE=34.089594285459306)
-- https://wandb.ai/we4/nyc_airbnb/runs/362kb3qj (n_estimators=380, MAE=33.904899098366926)
-- https://wandb.ai/we4/nyc_airbnb/runs/x2whfj6w (n_estimators=260, MAE=33.85856298530949)
-- https://wandb.ai/we4/nyc_airbnb/runs/a1chvha0 (n_estimators=120, MAE=33.95185122529132)
+- https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb/runs/wd0su1rx (n_estimators=120, MAE=34.11986329799576)
+- https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb/runs/4yaeskhi (n_estimators=220, MAE=34.089594285459306)
+- https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb/runs/g9jb5qgd (n_estimators=320, MAE=34.12159035267593)
 
-Distinct `n_estimators` values observed in recent runs: 120, 220, 260, 380.
+Distinct `n_estimators` values observed in recent runs: 100, 120, 220, 320.
 
 ## Screenshots To Attach
 
@@ -35,19 +34,19 @@ Distinct `n_estimators` values observed in recent runs: 120, 220, 260, 380.
 
 ## Quick Submission Text (Copy/Paste)
 
-I completed a Hydra-based hyperparameter search and logged multiple `train_random_forest` runs in W&B with different configurations (for example `n_estimators`: 120, 220, 260, 380). I selected the best model based on MAE and tagged the model artifact as `prod`.
+I completed a Hydra-based hyperparameter search and logged multiple `train_random_forest` runs in W&B with different configurations (for example `n_estimators`: 120, 220, 320). I selected the best model based on MAE and tagged the model artifact as `prod`.
 
-W&B project: https://wandb.ai/we4/nyc_airbnb
-Best run: https://wandb.ai/we4/nyc_airbnb/runs/x2whfj6w
-Prod artifact: https://wandb.ai/we4/nyc_airbnb/artifacts/model_export/random_forest_export/prod
+W&B project: https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb
+Best run: https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb/runs/4yaeskhi
+Prod artifact: https://wandb.ai/arijit-h-roy-accenture/nyc_airbnb/artifacts/model_export/random_forest_export/prod
 
 I also created and pushed two project releases/tags:
 - 1.0.0: https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow/releases/tag/1.0.0
 - 1.0.1: https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow/releases/tag/1.0.1
 
-## Important Note About GitHub Release Entries
+## Release Entries
 
-In this environment, automated GitHub release creation is blocked by authentication (GitHub sign-in required in browser, and GitHub CLI is not installed). The tags are already pushed, so release entries can be created quickly from these pages after login:
+Both release entries are published:
 
-- https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow/releases/new?tag=1.0.0
-- https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow/releases/new?tag=1.0.1
+- https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow/releases/tag/1.0.0
+- https://github.com/Arijit-1988/Udacity-Reproducible-Model-Workflow/releases/tag/1.0.1
